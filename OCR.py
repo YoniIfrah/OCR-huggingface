@@ -1,5 +1,7 @@
 from transformers import pipeline
 import re
+import datetime
+
 
 captioner = pipeline("image-to-text",model="jinhybr/OCR-Donut-CORD")
 
@@ -17,7 +19,7 @@ def fix_date(date:str):
     """
     day = ''
     month = ''
-    
+
     if date[0] == '0':
         day = date[1]
         if date[2] == '0':
@@ -34,6 +36,7 @@ def fix_date(date:str):
     #   in case we got invalid date
     if int(month) > 12 or int(day) > 31:
         return "not found"
+    
         
     return f"{day}/{month}"
 
@@ -55,10 +58,23 @@ def  is_date(string:str):
     if result == None:
         date_pattern = r'\d{1,2}[,./-:]\d{1,2}([,./-:]\d{1,4})?'
         result = re.search(date_pattern, string)
+        if result != None:
+            date = fix_date(re.sub(r"\D", "", result[0]))
+
     elif result != None:
         date = re.sub(r"[^\d]", "/", result[0])
         if date.count('/') < 2 :
             date = fix_date(re.sub(r"\D", "", result[0]))
+
+
+    if date.count('/') == 2:
+        year = '20'+date[-2:]
+        date = date[:-2] + year
+
+
+    elif date.count('/') == 1:
+        date += '/' + datetime.date.today().strftime("%Y")
+
     if date == '':
         return result[0] if result != None else 'not found'
         
