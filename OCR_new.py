@@ -3,6 +3,9 @@ import datetime
 import re
 captioner = pipeline("image-to-text",model="jinhybr/OCR-Donut-CORD")
 
+import datetime
+import re
+
 
 ERROR_MSG = "not found"
 
@@ -14,13 +17,22 @@ def split_string(input_string):
     result = [string for string in split_values if re.search(pattern, string) and len(string) > 4]
     return result
 
-def is_valid_date(string):
+def is_valid_date_format(str):
+    date_without_year = r"^\d{0,2}[-,.:/]\d{0,2}$"
+    date_with_year = r"^\d{0,2}[-,.:/]\d{0,2}[-,.:/]\d{0,4}$"
+    flag1 = re.match(date_without_year, str)
+    flag2 = re.match(date_with_year, str)
+    if bool(flag1) or bool(flag2):
+        return True
+    else:
+        return False
+
+def is_valid_date(date_string):
     try:
-        datetime.datetime.strptime(string, "%d/%m/%Y")
+        datetime.datetime.strptime(date_string, "%d/%m/%Y")
         return True
     except ValueError:
         return False
-
 
 def  run_expiration_date_workflow(string):
     """
@@ -42,11 +54,14 @@ def  run_expiration_date_workflow(string):
         for i in range(len(strings)):
             if len(strings[i]) > 2:
                 strings[i] = strings[i].replace(char, "/")
-    print("string ===== ",strings )
+
 
     for i in range(len(strings)):
-        if len(strings[i]) > 4 and strings[i].count('/') != 2:
-            strings[i] = fix_date(strings[i][:4]) + strings[i][4:]
+        if not is_valid_date_format(str=strings[i]):
+            if fix_date(strings[i][:4]) == ERROR_MSG:
+                strings[i] = ERROR_MSG
+            else: 
+                strings[i] = fix_date(strings[i][:4]) + strings[i][4:]
 
 
     # all the dates will include year
@@ -69,10 +84,6 @@ def  run_expiration_date_workflow(string):
             valid_dates.append(strings[i][:-2] + year)
 
 
-
-
-
-    
     result=[]
     result = [valid_date for valid_date in valid_dates if is_valid_date(valid_date)]
     print("##########")
@@ -122,7 +133,7 @@ def fix_date(date:str):
         return f"{day}/{month}"
     except:
         return ERROR_MSG
-    
+
 from PIL import Image
 
 import os
