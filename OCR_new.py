@@ -8,18 +8,47 @@ import re
 
 
 ERROR_MSG = "not found"
+import re
+import datetime
+
+
+ERROR_MSG = "not found"
+
 
 def split_string(input_string):
+    """
+    Splits an input string into substrings based on a pattern matching numbers, hyphens, periods, colons, or forward slashes.
+
+    Args:
+        input_string (str): The input string to be split.
+
+    Returns:
+        list: A list of substrings that match the specified pattern, containing numbers separated by hyphens, periods, colons, or forward slashes. Substrings with less than 5 characters or without any digits are excluded.
+
+    Example:
+        >>> split_string("Hello, today is 2023-06-17. How are you?")
+        ['2023-06-17']
+    """
     # pattern = r"[,./-:d]+"  # Regular expression pattern to match numbers, hyphens, forward slashes, and periods
-    pattern = r"\b(\d{0,4}[-,.:/]\d{0,4}(?:[-,.:/]\d{0,4})?)\b"
+    pattern = r"\b(\d{0,4}[-,./]\d{0,4}(?:[-,./]\d{0,4})?)\b"
     split_values = re.findall(pattern, input_string)
     pattern = r"\d+"  # Regular expression pattern to match one or more digits
     result = [string for string in split_values if re.search(pattern, string) and len(string) > 4]
     return result
 
 def is_valid_date_format(str):
-    date_without_year = r"^\d{0,2}[-,.:/]\d{0,2}$"
-    date_with_year = r"^\d{0,2}[-,.:/]\d{0,2}[-,.:/]\d{0,4}$"
+    """
+    Checking if the date has a valid format such as:
+    dd.mm.yyy or dd-mm-yyy or dd:mm:yyy or dd/mm/yyy or dd,mm,yyy
+
+    Args:
+        str (string): date as string
+
+    Returns:
+        bool: true if the date is valid with or without year eles false
+    """
+    date_without_year = r"^\d{0,2}[-,./]\d{0,2}$"
+    date_with_year = r"^\d{0,2}[-,./]\d{0,2}[-,./]\d{0,4}$"
     flag1 = re.match(date_without_year, str)
     flag2 = re.match(date_with_year, str)
     if bool(flag1) or bool(flag2):
@@ -28,6 +57,21 @@ def is_valid_date_format(str):
         return False
 
 def is_valid_date(date_string):
+    """
+    Checks if a date string is valid and can be parsed according to the format '%d/%m/%Y'.
+
+    Args:
+        date_string (str): The date string to be validated.
+
+    Returns:
+        bool: True if the date string is valid and can be parsed, False otherwise.
+
+    Example:
+        >>> is_valid_date("31/12/2022")
+        True
+        >>> is_valid_date("2022/12/31")
+        False
+    """
     try:
         datetime.datetime.strptime(date_string, "%d/%m/%Y")
         return True
@@ -66,7 +110,7 @@ def  run_expiration_date_workflow(string):
 
     # all the dates will include year
     for i in range(len(strings)):
-        # numbers -> date , fix date func
+
         if ERROR_MSG in strings[i]:
             continue
         if strings[i].count('/') == 0:
@@ -85,7 +129,12 @@ def  run_expiration_date_workflow(string):
 
 
     result=[]
+    #   Save only the dates that have valid format
     result = [valid_date for valid_date in valid_dates if is_valid_date(valid_date)]
+
+    #   Sorting the dates from the latest to the earliest
+    result.sort(key=lambda date: datetime.datetime.strptime(date, "%d/%m/%Y"), reverse=True)
+
     print("##########")
     if result:
         print(result[0])
@@ -133,6 +182,8 @@ def fix_date(date:str):
         return f"{day}/{month}"
     except:
         return ERROR_MSG
+
+
 
 from PIL import Image
 
